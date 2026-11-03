@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>KK Hijab Doll - ALL SUBJECT</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:'Segoe UI',sans-serif;background:#fdf2f8;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.header{background:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.07);position:sticky;top:0;z-index:10}
+.header img{width:44px;height:44px;border-radius:50%;border:2px solid #ff69b4}
+#chat-box{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:14px;padding-bottom:115px;background:linear-gradient(#fdf2f8,#fff)}
+.user-message{align-self:flex-end;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;padding:11px 16px;border-radius:20px 20px 4px 20px;max-width:80%;font-size:14px;line-height:1.5;box-shadow:0 4px 12px rgba(124,58,237,.3);word-break:break-word}
+.bot-message{align-self:flex-start;background:#fff;color:#222;padding:12px 14px;border-radius:20px 20px 20px 4px;max-width:86%;font-size:14px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #f5f3ff;white-space:pre-wrap;word-break:break-word}
+.bot-message img{width:100%;border-radius:16px;margin-top:10px;max-height:480px;object-fit:contain;background:#f9fafb}
+.msg-wrap{position:relative;display:flex;flex-direction:column}
+.del{font-size:10px;color:#bbb;cursor:pointer;margin-top:4px;align-self:flex-end} .del:hover{color:#ef4444}
+.action{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn-dl{background:#ff69b4;color:#fff;padding:7px 14px;border-radius:20px;font-size:12px;text-decoration:none;font-weight:700}
+.btn-sh{background:#111;color:#fff;padding:7px 14px;border-radius:20px;font-size:12px;border:none;font-weight:700;cursor:pointer}
+.input-area{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.98);backdrop-filter:blur(12px);padding:10px 10px;display:flex;gap:7px;align-items:center;border-top:1px solid #f3e8ff;z-index:20}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid #e9d5ff;background:#fff;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn.active{background:#7c3aed;color:#fff;border-color:#7c3aed;animation:pulse 1s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+.text-box{flex:1;display:flex;align-items:center;background:#fdf2f8;border:1.5px solid #e9d5ff;border-radius:28px;padding:0 12px}
+.text-box input{flex:1;border:none;background:transparent;padding:13px 8px;font-size:14px;outline:none}
+.btn-send{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;width:46px;height:46px;border-radius:50%;font-weight:800;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,.35);flex-shrink:0}
+</style></head><body>
+<div class="header">
+<img src="/static/logo.png">
+<div style="flex:1"><b>KK Hijab Doll 💖 ALL SUBJECT</b><div style="font-size:11px;color:#666">Math, Commerce, Science, Editing - Sab Aata Hai</div></div>
+<button id="voiceToggle" onclick="toggleVoice()" style="background:#f3e8ff;border:1px solid #e9d5ff;color:#7c3aed;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700">🔊 Awaz OFF</button>
+<button onclick="deleteAll()" style="background:#fff0f3;border:1px solid #fecdd3;color:#e11d48;padding:6px 10px;border-radius:20px;font-size:11px;margin-left:5px">🗑️</button>
+</div>
+<div id="chat-box"></div>
+<div class="input-area">
+<button class="icon-btn" onclick="document.getElementById('imgInput').click()" title="Tasveer">📷</button>
+<input type="file" id="imgInput" accept="image/*" style="display:none" onchange="uploadImg()">
+<button class="icon-btn" id="micBtn" onclick="startListening()" title="Bolo">🎤</button>
+<div class="text-box"><input id="msg" type="text" placeholder="Sawal likho... Commerce, Math, Princess, Card..."></div>
+<button class="btn-send" onclick="send()">↑</button>
+</div>
+<script>
+let history = {{ history|tojson }};
+let box = document.getElementById('chat-box');
+let voiceOn = false; let synth = window.speechSynthesis; let recognition;
+function render(){
+ box.innerHTML='';
+ if(history.length==0){
+   box.innerHTML=`<div class="bot-message">Assalamu Alaikum Kulsoom jaan! 💖 Mai aapki KK Doll hun, ab mai HAR SUBJECT ki teacher bhi hun! 📚<br><br>• <b>Commerce:</b> Accounting, Journal, Profit Loss<br>• <b>Math:</b> Percentage, Interest, Algebra<br>• <b>Science, English, Islamiat</b><br>• <b>Editing:</b> Princess, Card, Cartoon<br><br>🔊 Awaz ON karo, 🎤 se bolo, ya likh kar poocho!<br>Example: "Journal entry samjhao" ya "15% profit nikalo" 💖</div>`; return;
+ }
+ history.forEach(h=>{
+  let cls=h.role=='user'?'user-message':'bot-message';
+  let img=h.img?`<br><img src="${h.img}?t=${Date.now()}"><div class="action"><a href="${h.img}" download class="btn-dl">⬇️ Download</a><button class="btn-sh" onclick="shareImg('${h.img}')">📤 Share</button></div>`:'';
+  let speakBtn=h.role=='bot'?`<span style="font-size:11px;color:#7c3aed;cursor:pointer;margin-top:6px;display:inline-block" onclick="speakText(\`${h.text.replace(/`/g,'').replace(/'/g,'')}\`)">🔊 Suno</span>`:'';
+  box.innerHTML+=`<div class="msg-wrap"><div class="${cls}">${h.text}${img}<br>${speakBtn}</div><span class="del" onclick="deleteOne('${h.id}')">Delete ❌</span></div>`;
+ });
+ box.scrollTop=box.scrollHeight;
+}
+render();
+function toggleVoice(){
+ voiceOn=!voiceOn;
+ document.getElementById('voiceToggle').innerText=voiceOn?"🔊 Awaz ON":"🔇 Awaz OFF";
+ document.getElementById('voiceToggle').style.background=voiceOn?"#7c3aed":"#f3e8ff";
+ document.getElementById('voiceToggle').style.color=voiceOn?"#fff":"#7c3aed";
+ if(voiceOn) speakText("Assalamu Alaikum jaan, ab mai aapko har subject parhaungi, aap jo bhi boly mai woh kardo gi q ke mai KK Doll hun");
+}
+function speakText(text){
+ synth.cancel();
+ let clean=text.replace(/<[^>]*>/g,'').replace(/https?:\/\/\S+/g,'').substring(0,350);
+ let u=new SpeechSynthesisUtterance(clean);
+ let voices=synth.getVoices();
+ let urduVoice=voices.find(v=>v.lang.includes('ur')||v.lang.includes('hi'))||voices.find(v=>v.name.toLowerCase().includes('female'))||voices[0];
+ if(urduVoice) u.voice=urduVoice;
+ u.lang='ur-PK'; u.pitch=1.35; u.rate=0.88; u.volume=1; synth.speak(u);
+}
+window.speechSynthesis.onvoiceschanged=()=>{ synth.getVoices(); };
+function startListening(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){ alert("Chrome use karo jaan, mic wahan chalta hai"); return; }
+ recognition=new SR(); recognition.lang='ur-PK'; recognition.interimResults=false;
+ document.getElementById('micBtn').classList.add('active'); document.getElementById('micBtn').innerText='🔴';
+ recognition.onresult=(e)=>{ document.getElementById('msg').value=e.results[0][0].transcript; send(); };
+ recognition.onend=()=>{ document.getElementById('micBtn').classList.remove('active'); document.getElementById('micBtn').innerText='🎤'; };
+ recognition.onerror=()=>{ document.getElementById('micBtn').classList.remove('active'); document.getElementById('micBtn').innerText='🎤'; };
+ recognition.start();
+}
+function send(){
+ let i=document.getElementById('msg'); let m=i.value.trim(); if(!m) return;
+ i.value=''; box.innerHTML+=`<div class="msg-wrap"><div class="user-message">${m}</div></div>`; box.scrollTop=box.scrollHeight;
+ let f=new FormData(); f.append('message', m);
+ fetch('/chat',{method:'POST',body:f}).then(r=>r.json()).then(d=>{ history=d.history; render(); if(voiceOn) speakText(d.reply); });
+}
+function uploadImg(){
+ let file=document.getElementById('imgInput').files[0]; if(!file) return;
+ let prompt=document.getElementById('msg').value||"Isko Princess bana do best quality me";
+ let f=new FormData(); f.append('image',file); f.append('prompt',prompt);
+ box.innerHTML+=`<div class="msg-wrap"><div class="user-message">📷 ${prompt}</div></div>`; box.scrollTop=box.scrollHeight;
+ fetch('/edit-image',{method:'POST',body:f}).then(r=>r.json()).then(d=>{ history=d.history; render(); if(voiceOn) speakText(d.reply); });
+}
+function deleteOne(id){ fetch('/delete-message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).then(r=>r.json()).then(d=>{ history=d.history; render(); }); }
+function deleteAll(){ if(!confirm('Sari chat delete kar dun jaan?')) return; fetch('/delete-all',{method:'POST'}).then(()=>{ history=[]; render(); }); }
+function shareImg(url){ if(navigator.share){ navigator.share({title:'KK Doll', text:'Dekho 💖', url: location.origin+url}); } else { alert('Download karke share karo jaan'); } }
+document.getElementById('msg').addEventListener("keypress", e=>{ if(e.key==="Enter") send(); });
+</script>
+</body></html>
